@@ -6,6 +6,7 @@ import '../providers/cart_provider.dart';
 import '../theme/app_theme.dart';
 import '../widgets/animated_bottom_nav.dart';
 import '../widgets/coffee_card.dart';
+import '../widgets/drink_hero_card.dart';
 import 'cart_screen.dart';
 import 'coffee_detail_screen.dart';
 
@@ -19,10 +20,52 @@ class HomeScreen extends StatefulWidget {
 class _HomeScreenState extends State<HomeScreen> {
   CoffeeCategory? _selectedCategory;
   int _navIndex = 0;
+  int _heroIndex = 0;
+
+  late final PageController _heroController;
+
+  final List<Coffee> _heroList = coffeeMenu;
 
   List<Coffee> get _filtered => _selectedCategory == null
       ? coffeeMenu
       : coffeeMenu.where((c) => c.category == _selectedCategory).toList();
+
+  @override
+  void initState() {
+    super.initState();
+    _heroController = PageController(viewportFraction: 0.86);
+  }
+
+  @override
+  void dispose() {
+    _heroController.dispose();
+    super.dispose();
+  }
+
+  void _openDetail(Coffee coffee) {
+    Navigator.of(context).push(
+      PageRouteBuilder(
+        transitionDuration: AppDurations.medium,
+        pageBuilder: (_, anim, __) => CoffeeDetailScreen(coffee: coffee),
+        transitionsBuilder: (_, anim, __, child) {
+          final curved = CurvedAnimation(
+            parent: anim,
+            curve: AppCurves.emphasized,
+          );
+          return FadeTransition(
+            opacity: curved,
+            child: SlideTransition(
+              position: Tween<Offset>(
+                begin: const Offset(0, 0.08),
+                end: Offset.zero,
+              ).animate(curved),
+              child: child,
+            ),
+          );
+        },
+      ),
+    );
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -31,49 +74,64 @@ class _HomeScreenState extends State<HomeScreen> {
     return Scaffold(
       backgroundColor: AppColors.background,
       body: SafeArea(
-        child: Column(
-          children: [
-            _buildHeader(cart),
-            const SizedBox(height: 8),
-            _buildCategoryChips(),
-            const SizedBox(height: 4),
-            Expanded(
-              child: ListView.builder(
-                padding: const EdgeInsets.fromLTRB(20, 8, 20, 20),
-                itemCount: _filtered.length,
-                itemBuilder: (context, index) {
-                  final coffee = _filtered[index];
-                  return Padding(
-                    padding: const EdgeInsets.only(bottom: 14),
-                    child: CoffeeCard(
-                      coffee: coffee,
-                      index: index,
-                      onTap: () => Navigator.of(context).push(
-                        PageRouteBuilder(
-                          transitionDuration: AppDurations.medium,
-                          pageBuilder: (_, anim, _) =>
-                              CoffeeDetailScreen(coffee: coffee),
-                          transitionsBuilder: (_, anim, _, child) {
-                            final curved = CurvedAnimation(
-                              parent: anim,
-                              curve: AppCurves.emphasized,
-                            );
-                            return FadeTransition(
-                              opacity: curved,
-                              child: SlideTransition(
-                                position: Tween<Offset>(
-                                  begin: const Offset(0, 0.08),
-                                  end: Offset.zero,
-                                ).animate(curved),
-                                child: child,
-                              ),
-                            );
-                          },
-                        ),
+        child: CustomScrollView(
+          slivers: [
+            SliverToBoxAdapter(child: _buildHeader(cart)),
+            const SliverToBoxAdapter(child: SizedBox(height: 14)),
+            SliverToBoxAdapter(child: _sectionLabel('Featured for you')),
+            const SliverToBoxAdapter(child: SizedBox(height: 10)),
+            SliverToBoxAdapter(
+              child: SizedBox(
+                height: 470,
+                child: PageView.builder(
+                  controller: _heroController,
+                  itemCount: _heroList.length,
+                  onPageChanged: (i) => setState(() => _heroIndex = i),
+                  itemBuilder: (context, i) {
+                    return AnimatedBuilder(
+                      animation: _heroController,
+                      builder: (context, child) {
+                        double scale = 1.0;
+                        if (_heroController.position.haveDimensions) {
+                          final page =
+                              _heroController.page ?? _heroIndex.toDouble();
+                          scale = (1 - ((page - i).abs() * 0.10)).clamp(0.90, 1.0);
+                        }
+                        return Transform.scale(scale: scale, child: child);
+                      },
+                      child: DrinkHeroCard(
+                        coffee: _heroList[i],
+                        onViewDetails: () => _openDetail(_heroList[i]),
                       ),
-                    ),
-                  );
-                },
+                    );
+                  },
+                ),
+              ),
+            ),
+            const SliverToBoxAdapter(child: SizedBox(height: 12)),
+            SliverToBoxAdapter(child: _buildDots()),
+            const SliverToBoxAdapter(child: SizedBox(height: 22)),
+            SliverToBoxAdapter(child: _sectionLabel('Full Menu')),
+            const SliverToBoxAdapter(child: SizedBox(height: 4)),
+            SliverToBoxAdapter(child: _buildCategoryChips()),
+            const SliverToBoxAdapter(child: SizedBox(height: 4)),
+            SliverPadding(
+              padding: const EdgeInsets.fromLTRB(20, 8, 20, 24),
+              sliver: SliverList(
+                delegate: SliverChildBuilderDelegate(
+                  (context, index) {
+                    final coffee = _filtered[index];
+                    return Padding(
+                      padding: const EdgeInsets.only(bottom: 14),
+                      child: CoffeeCard(
+                        coffee: coffee,
+                        index: index,
+                        onTap: () => _openDetail(coffee),
+                      ),
+                    );
+                  },
+                  childCount: _filtered.length,
+                ),
               ),
             ),
           ],
@@ -96,6 +154,40 @@ class _HomeScreenState extends State<HomeScreen> {
           }
         },
       ),
+    );
+  }
+
+  static Widget _sectionLabel(String text) {
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(20, 0, 20, 0),
+      child: Text(
+        text,
+        style: const TextStyle(
+          color: AppColors.cream,
+          fontSize: 17,
+          fontWeight: FontWeight.w700,
+        ),
+      ),
+    );
+  }
+
+  Widget _buildDots() {
+    return Row(
+      mainAxisAlignment: MainAxisAlignment.center,
+      children: List.generate(_heroList.length, (i) {
+        final selected = i == _heroIndex;
+        return AnimatedContainer(
+          duration: AppDurations.medium,
+          curve: AppCurves.overshoot,
+          margin: const EdgeInsets.symmetric(horizontal: 3),
+          width: selected ? 20 : 6,
+          height: 6,
+          decoration: BoxDecoration(
+            color: selected ? AppColors.accent : AppColors.surfaceElevated,
+            borderRadius: BorderRadius.circular(4),
+          ),
+        );
+      }),
     );
   }
 
