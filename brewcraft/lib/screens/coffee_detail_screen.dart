@@ -4,6 +4,8 @@ import '../models/coffee.dart';
 import '../providers/cart_provider.dart';
 import '../theme/app_theme.dart';
 import '../widgets/animated_coffee_cup.dart';
+import '../widgets/size_pill_selector.dart';
+import '../widgets/slide_to_order_button.dart';
 
 class CoffeeDetailScreen extends StatefulWidget {
   final Coffee coffee;
@@ -13,40 +15,14 @@ class CoffeeDetailScreen extends StatefulWidget {
   State<CoffeeDetailScreen> createState() => _CoffeeDetailScreenState();
 }
 
-class _CoffeeDetailScreenState extends State<CoffeeDetailScreen>
-    with SingleTickerProviderStateMixin {
-  final _sizes = const ['S', 'M', 'L'];
+class _CoffeeDetailScreenState extends State<CoffeeDetailScreen> {
   String _selectedSize = 'M';
   int _quantity = 1;
-
-  late final AnimationController _addController;
-  late final Animation<double> _addScale;
-
-  @override
-  void initState() {
-    super.initState();
-    _addController = AnimationController(
-      vsync: this,
-      duration: AppDurations.medium,
-    );
-    _addScale = TweenSequence<double>([
-      TweenSequenceItem(tween: Tween(begin: 1.0, end: 0.88), weight: 30),
-      TweenSequenceItem(tween: Tween(begin: 0.88, end: 1.05), weight: 40),
-      TweenSequenceItem(tween: Tween(begin: 1.05, end: 1.0), weight: 30),
-    ]).animate(CurvedAnimation(parent: _addController, curve: Curves.easeOut));
-  }
-
-  @override
-  void dispose() {
-    _addController.dispose();
-    super.dispose();
-  }
 
   void _addToCart() {
     context
         .read<CartProvider>()
         .addToCart(widget.coffee, _selectedSize, quantity: _quantity);
-    _addController.forward(from: 0);
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
         behavior: SnackBarBehavior.floating,
@@ -72,6 +48,17 @@ class _CoffeeDetailScreenState extends State<CoffeeDetailScreen>
         return 0.92;
       default:
         return 0.75;
+    }
+  }
+
+  double get _sizeMultiplier {
+    switch (_selectedSize) {
+      case 'S':
+        return 0.9;
+      case 'L':
+        return 1.35;
+      default:
+        return 1.1;
     }
   }
 
@@ -103,17 +90,35 @@ class _CoffeeDetailScreenState extends State<CoffeeDetailScreen>
                 padding: const EdgeInsets.symmetric(horizontal: 24),
                 child: Column(
                   children: [
-                    Hero(
-                      tag: 'cup_${coffee.id}',
-                      child: AnimatedCoffeeCup(
-                        width: 190,
-                        height: 220,
-                        targetFill: _fillForSize,
-                        liquidColor: coffee.primaryColor,
-                        cremaColor: coffee.secondaryColor,
-                        intensity: coffee.intensity,
-                        fillDuration: const Duration(milliseconds: 900),
-                      ),
+                    Stack(
+                      alignment: Alignment.center,
+                      children: [
+                        Container(
+                          width: 220,
+                          height: 220,
+                          decoration: BoxDecoration(
+                            shape: BoxShape.circle,
+                            gradient: RadialGradient(
+                              colors: [
+                                coffee.primaryColor.withValues(alpha: 0.35),
+                                coffee.primaryColor.withValues(alpha: 0.0),
+                              ],
+                            ),
+                          ),
+                        ),
+                        Hero(
+                          tag: 'cup_${coffee.id}',
+                          child: AnimatedCoffeeCup(
+                            width: 190,
+                            height: 220,
+                            targetFill: _fillForSize,
+                            liquidColor: coffee.primaryColor,
+                            cremaColor: coffee.secondaryColor,
+                            intensity: coffee.intensity,
+                            fillDuration: const Duration(milliseconds: 900),
+                          ),
+                        ),
+                      ],
                     ),
                     const SizedBox(height: 8),
                     Text(
@@ -143,7 +148,11 @@ class _CoffeeDetailScreenState extends State<CoffeeDetailScreen>
                       ),
                     ),
                     const SizedBox(height: 24),
-                    _buildSizeSelector(),
+                    SizePillSelector(
+                      selected: _selectedSize,
+                      onChanged: (s) => setState(() => _selectedSize = s),
+                      height: 50,
+                    ),
                     const SizedBox(height: 20),
                     _buildQuantityStepper(),
                     const SizedBox(height: 12),
@@ -153,85 +162,15 @@ class _CoffeeDetailScreenState extends State<CoffeeDetailScreen>
             ),
             Padding(
               padding: const EdgeInsets.fromLTRB(24, 0, 24, 20),
-              child: ScaleTransition(
-                scale: _addScale,
-                child: SizedBox(
-                  width: double.infinity,
-                  height: 56,
-                  child: ElevatedButton(
-                    onPressed: _addToCart,
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: AppColors.accent,
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(AppRadii.md),
-                      ),
-                      elevation: 0,
-                    ),
-                    child: Row(
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      children: [
-                        const Text(
-                          'Add to Cart',
-                          style: TextStyle(
-                            color: Colors.black,
-                            fontWeight: FontWeight.w700,
-                            fontSize: 16,
-                          ),
-                        ),
-                        const SizedBox(width: 8),
-                        Text(
-                          '· \$${(coffee.price * _quantity).toStringAsFixed(2)}',
-                          style: const TextStyle(
-                            color: Colors.black87,
-                            fontWeight: FontWeight.w600,
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
-                ),
+              child: SlideToOrderButton(
+                label: 'Slide to Add',
+                priceLabel:
+                    '\$${(coffee.price * _sizeMultiplier * _quantity).toStringAsFixed(2)}',
+                onConfirmed: _addToCart,
               ),
             ),
           ],
         ),
-      ),
-    );
-  }
-
-  Widget _buildSizeSelector() {
-    return Container(
-      padding: const EdgeInsets.all(6),
-      decoration: BoxDecoration(
-        color: AppColors.surfaceElevated,
-        borderRadius: BorderRadius.circular(20),
-      ),
-      child: Row(
-        children: _sizes.map((size) {
-          final selected = size == _selectedSize;
-          return Expanded(
-            child: GestureDetector(
-              onTap: () => setState(() => _selectedSize = size),
-              child: AnimatedContainer(
-                duration: AppDurations.medium,
-                curve: AppCurves.overshoot,
-                margin: const EdgeInsets.symmetric(horizontal: 3),
-                padding: const EdgeInsets.symmetric(vertical: 12),
-                decoration: BoxDecoration(
-                  gradient: selected ? AppColors.accentGradient : null,
-                  borderRadius: BorderRadius.circular(16),
-                ),
-                alignment: Alignment.center,
-                child: Text(
-                  size,
-                  style: TextStyle(
-                    color: selected ? Colors.black : AppColors.textMuted,
-                    fontWeight: FontWeight.w700,
-                  ),
-                ),
-              ),
-            ),
-          );
-        }).toList(),
       ),
     );
   }
