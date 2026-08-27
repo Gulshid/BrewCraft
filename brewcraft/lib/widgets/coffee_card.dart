@@ -83,21 +83,18 @@ class _CoffeeCardState extends State<CoffeeCard>
               ),
               child: Row(
                 children: [
-                  Hero(
-                    tag: 'cup_${widget.coffee.id}',
-                    child: SizedBox(
+                  SizedBox(
+                    width: 64,
+                    height: 76,
+                    child: AnimatedCoffeeCup(
                       width: 64,
                       height: 76,
-                      child: AnimatedCoffeeCup(
-                        width: 64,
-                        height: 76,
-                        showSteam: false,
-                        targetFill: 0.75,
-                        liquidColor: widget.coffee.primaryColor,
-                        cremaColor: widget.coffee.secondaryColor,
-                        intensity: widget.coffee.intensity,
-                        fillDuration: const Duration(milliseconds: 1400),
-                      ),
+                      showSteam: false,
+                      targetFill: 0.75,
+                      liquidColor: widget.coffee.primaryColor,
+                      cremaColor: widget.coffee.secondaryColor,
+                      intensity: widget.coffee.intensity,
+                      fillDuration: const Duration(milliseconds: 1400),
                     ),
                   ),
                   const SizedBox(width: 16),
