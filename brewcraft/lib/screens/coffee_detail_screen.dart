@@ -115,6 +115,8 @@ class _CoffeeDetailScreenState extends State<CoffeeDetailScreen> {
                             liquidColor: coffee.primaryColor,
                             cremaColor: coffee.secondaryColor,
                             intensity: coffee.intensity,
+                            showStraw: coffee.category == CoffeeCategory.cold ||
+                                coffee.category == CoffeeCategory.specialty,
                             fillDuration: const Duration(milliseconds: 900),
                           ),
                         ),

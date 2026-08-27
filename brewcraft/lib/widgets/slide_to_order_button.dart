@@ -103,43 +103,55 @@ class _SlideToOrderButtonState extends State<SlideToOrderButton> {
                   ),
                 ),
                 Positioned.fill(
-                  child: Center(
-                    child: AnimatedOpacity(
-                      duration: AppDurations.fast,
-                      opacity: _dragExtent > 0.45 ? 0 : 1,
-                      child: Text(
-                        widget.priceLabel.isEmpty
-                            ? widget.label
-                            : '${widget.label}   ·   ${widget.priceLabel}',
-                        style: const TextStyle(
-                          color: AppColors.cream,
-                          fontWeight: FontWeight.w600,
-                          fontSize: 14.5,
+                  child: Padding(
+                    padding: EdgeInsets.only(left: knobSize + 14, right: 12),
+                    child: Center(
+                      child: AnimatedOpacity(
+                        duration: AppDurations.fast,
+                        opacity: _dragExtent > 0.45 ? 0 : 1,
+                        child: Text(
+                          widget.priceLabel.isEmpty
+                              ? widget.label
+                              : '${widget.label}   ·   ${widget.priceLabel}',
+                          overflow: TextOverflow.ellipsis,
+                          maxLines: 1,
+                          style: const TextStyle(
+                            color: AppColors.cream,
+                            fontWeight: FontWeight.w600,
+                            fontSize: 14.5,
+                          ),
                         ),
                       ),
                     ),
                   ),
                 ),
                 Positioned.fill(
-                  child: Center(
-                    child: AnimatedOpacity(
-                      duration: AppDurations.fast,
-                      opacity: _completed ? 1 : 0,
-                      child: Row(
-                        mainAxisAlignment: MainAxisAlignment.center,
-                        children: [
-                          const Icon(Icons.check_circle_rounded,
-                              color: Colors.black, size: 18),
-                          const SizedBox(width: 8),
-                          Text(
-                            widget.successLabel,
-                            style: const TextStyle(
-                              color: Colors.black,
-                              fontWeight: FontWeight.w700,
-                              fontSize: 14.5,
+                  child: Padding(
+                    padding: EdgeInsets.only(left: knobSize + 14, right: 12),
+                    child: Center(
+                      child: AnimatedOpacity(
+                        duration: AppDurations.fast,
+                        opacity: _completed ? 1 : 0,
+                        child: Row(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: [
+                            const Icon(Icons.check_circle_rounded,
+                                color: Colors.black, size: 18),
+                            const SizedBox(width: 8),
+                            Flexible(
+                              child: Text(
+                                widget.successLabel,
+                                overflow: TextOverflow.ellipsis,
+                                maxLines: 1,
+                                style: const TextStyle(
+                                  color: Colors.black,
+                                  fontWeight: FontWeight.w700,
+                                  fontSize: 14.5,
+                                ),
+                              ),
                             ),
-                          ),
-                        ],
+                          ],
+                        ),
                       ),
                     ),
                   ),

@@ -1,17 +1,18 @@
 import 'dart:math' as math;
 import 'package:flutter/material.dart';
 
-/// Paints a cup silhouette with a liquid fill that rises to [fillLevel]
-/// (0..1) and animates two out-of-phase sine waves across its surface,
-/// plus a soft crema layer riding on top. Driven every frame by
-/// [wavePhase] (0..2*pi, looped by an AnimationController elsewhere) so
-/// the liquid always looks alive, not just filled.
+/// Paints a to-go cup: a glass body with a liquid fill that rises to
+/// [fillLevel] (0..1) and animates two out-of-phase sine waves across its
+/// surface, a whipped-topping dome riding on the surface, a lid, and
+/// (optionally) a straw — driven every frame by [wavePhase] so the drink
+/// always looks alive, not just filled.
 class LiquidWavePainter extends CustomPainter {
   final double fillLevel; // 0..1, how full the cup is
   final double wavePhase; // radians, animates the surface ripple
   final Color liquidColor;
   final Color cremaColor;
-  final double intensity; // 0..1, thickness of the crema band
+  final double intensity; // 0..1, thickness of the topping dome
+  final bool showStraw;
 
   LiquidWavePainter({
     required this.fillLevel,
@@ -19,17 +20,42 @@ class LiquidWavePainter extends CustomPainter {
     required this.liquidColor,
     required this.cremaColor,
     required this.intensity,
+    this.showStraw = false,
   });
 
   @override
   void paint(Canvas canvas, Size size) {
     final cupPath = _cupPath(size);
+
     canvas.save();
     canvas.clipPath(cupPath);
 
+    // A faint glass tint so the empty part of the cup still reads as
+    // glass instead of disappearing into the background.
+    final glassPaint = Paint()
+      ..shader = LinearGradient(
+        begin: Alignment.topCenter,
+        end: Alignment.bottomCenter,
+        colors: [
+          Colors.white.withValues(alpha: 0.09),
+          Colors.white.withValues(alpha: 0.02),
+        ],
+      ).createShader(Offset.zero & size);
+    canvas.drawRect(Offset.zero & size, glassPaint);
+
     final liquidTop = size.height * (1 - fillLevel);
     final wavePaintBack = Paint()..color = liquidColor.withValues(alpha: 0.85);
-    final wavePaintFront = Paint()..color = liquidColor;
+    final liquidRect =
+        Rect.fromLTWH(0, liquidTop, size.width, size.height - liquidTop);
+    final wavePaintFront = Paint()
+      ..shader = LinearGradient(
+        begin: Alignment.topCenter,
+        end: Alignment.bottomCenter,
+        colors: [
+          Color.lerp(liquidColor, Colors.white, 0.14) ?? liquidColor,
+          liquidColor,
+        ],
+      ).createShader(liquidRect);
 
     _drawWave(
       canvas,
@@ -48,35 +74,63 @@ class LiquidWavePainter extends CustomPainter {
       paint: wavePaintFront,
     );
 
-    // Crema band: a translucent lighter strip sitting on the current
-    // liquid surface, thickness scales with `intensity`.
+    // Whipped topping / crema dome riding on the surface.
     if (fillLevel > 0.03) {
-      final cremaHeight = 10 + intensity * 10;
-      final cremaRect = Rect.fromLTWH(
-        0,
-        liquidTop - cremaHeight * 0.4,
-        size.width,
-        cremaHeight,
-      );
-      final cremaPaint = Paint()
+      final domeHeight = 9 + intensity * 9;
+      final domeLeft = size.width * 0.08;
+      final domeRight = size.width * 0.92;
+      final domeTop = liquidTop - domeHeight;
+      final domeCenterX = (domeLeft + domeRight) / 2;
+
+      final dome = Path()
+        ..moveTo(domeLeft, liquidTop)
+        ..quadraticBezierTo(domeLeft, domeTop, domeCenterX, domeTop)
+        ..quadraticBezierTo(domeRight, domeTop, domeRight, liquidTop)
+        ..close();
+      final domePaint = Paint()
         ..shader = LinearGradient(
           begin: Alignment.topCenter,
           end: Alignment.bottomCenter,
-          colors: [cremaColor.withValues(alpha: 0.95), cremaColor.withValues(alpha: 0.0)],
-        ).createShader(cremaRect);
-      canvas.drawRect(cremaRect, cremaPaint);
+          colors: [
+            Color.lerp(cremaColor, Colors.white, 0.4) ?? cremaColor,
+            cremaColor,
+          ],
+        ).createShader(Rect.fromLTRB(domeLeft, domeTop, domeRight, liquidTop));
+      canvas.drawPath(dome, domePaint);
+
+      // Soft ridge highlights for a whipped texture.
+      final ridgePaint = Paint()
+        ..style = PaintingStyle.stroke
+        ..strokeWidth = 1.4
+        ..color = Colors.white.withValues(alpha: 0.32);
+      for (final dx in [-0.16, 0.0, 0.16]) {
+        canvas.drawArc(
+          Rect.fromCenter(
+            center: Offset(
+              domeCenterX + dx * (domeRight - domeLeft),
+              liquidTop - domeHeight * 0.32,
+            ),
+            width: (domeRight - domeLeft) * 0.3,
+            height: domeHeight * 0.85,
+          ),
+          math.pi,
+          math.pi,
+          false,
+          ridgePaint,
+        );
+      }
     }
 
-    // Subtle inner shadow at the cup walls for depth.
+    // Inner wall shadow for depth.
     final shadowPaint = Paint()
       ..shader = LinearGradient(
         begin: Alignment.centerLeft,
         end: Alignment.centerRight,
         colors: [
-          Colors.black.withValues(alpha: 0.18),
+          Colors.black.withValues(alpha: 0.22),
           Colors.transparent,
           Colors.transparent,
-          Colors.black.withValues(alpha: 0.18),
+          Colors.black.withValues(alpha: 0.22),
         ],
         stops: const [0.0, 0.15, 0.85, 1.0],
       ).createShader(Offset.zero & size);
@@ -84,12 +138,83 @@ class LiquidWavePainter extends CustomPainter {
 
     canvas.restore();
 
-    // Cup outline drawn on top so the liquid reads as "inside glass".
+    // Cup outline, tinted with the drink's own color for a premium look.
     final outline = Paint()
       ..style = PaintingStyle.stroke
-      ..strokeWidth = 2.4
-      ..color = Colors.white.withValues(alpha: 0.18);
+      ..strokeWidth = 2.6
+      ..color =
+          (Color.lerp(liquidColor, Colors.white, 0.55) ?? Colors.white)
+              .withValues(alpha: 0.55);
     canvas.drawPath(cupPath, outline);
+
+    // A glossy diagonal highlight so the body reads as glass/plastic.
+    final highlight = Paint()
+      ..style = PaintingStyle.stroke
+      ..strokeWidth = size.width * 0.06
+      ..strokeCap = StrokeCap.round
+      ..color = Colors.white.withValues(alpha: 0.10);
+    canvas.drawLine(
+      Offset(size.width * 0.28, size.height * 0.08),
+      Offset(size.width * 0.2, size.height * 0.62),
+      highlight,
+    );
+
+    _drawLid(canvas, size);
+    if (showStraw) _drawStraw(canvas, size, liquidTop);
+  }
+
+  void _drawLid(Canvas canvas, Size size) {
+    final lidRect = Rect.fromLTWH(
+      size.width * 0.02,
+      -size.height * 0.015,
+      size.width * 0.96,
+      size.height * 0.09,
+    );
+    final lidRRect = RRect.fromRectAndRadius(
+      lidRect,
+      Radius.circular(lidRect.height),
+    );
+    canvas.drawRRect(
+      lidRRect,
+      Paint()..color = Colors.white.withValues(alpha: 0.92),
+    );
+    canvas.drawRRect(
+      lidRRect,
+      Paint()
+        ..style = PaintingStyle.stroke
+        ..strokeWidth = 1.4
+        ..color = Colors.black.withValues(alpha: 0.12),
+    );
+  }
+
+  void _drawStraw(Canvas canvas, Size size, double liquidTop) {
+    final strawX = size.width * 0.63;
+    final strawWidth = size.width * 0.045;
+    final strawTop = -size.height * 0.16;
+    final strawBottom =
+        math.min(liquidTop + size.height * 0.16, size.height * 0.88);
+
+    final strawRRect = RRect.fromRectAndRadius(
+      Rect.fromLTRB(
+        strawX - strawWidth / 2,
+        strawTop,
+        strawX + strawWidth / 2,
+        strawBottom,
+      ),
+      Radius.circular(strawWidth / 2),
+    );
+    canvas.drawRRect(
+      strawRRect,
+      Paint()
+        ..shader = LinearGradient(
+          begin: Alignment.centerLeft,
+          end: Alignment.centerRight,
+          colors: [
+            Colors.white.withValues(alpha: 0.92),
+            Colors.white.withValues(alpha: 0.55),
+          ],
+        ).createShader(strawRRect.outerRect),
+    );
   }
 
   void _drawWave(
@@ -131,6 +256,7 @@ class LiquidWavePainter extends CustomPainter {
     return oldDelegate.fillLevel != fillLevel ||
         oldDelegate.wavePhase != wavePhase ||
         oldDelegate.liquidColor != liquidColor ||
-        oldDelegate.intensity != intensity;
+        oldDelegate.intensity != intensity ||
+        oldDelegate.showStraw != showStraw;
   }
 }

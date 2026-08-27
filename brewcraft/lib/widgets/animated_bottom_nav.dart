@@ -67,15 +67,22 @@ class AnimatedBottomNav extends StatelessWidget {
                         size: 22,
                       ),
                     ),
-                    AnimatedDefaultTextStyle(
+                    AnimatedSize(
                       duration: AppDurations.fast,
-                      style: TextStyle(
-                        fontSize: selected ? 11 : 0,
-                        height: selected ? 1.6 : 0,
-                        fontWeight: FontWeight.w600,
-                        color: Colors.black,
-                      ),
-                      child: Text(selected ? items[i].label : ''),
+                      curve: Curves.easeOut,
+                      child: selected
+                          ? Padding(
+                              padding: const EdgeInsets.only(top: 4),
+                              child: Text(
+                                items[i].label,
+                                style: const TextStyle(
+                                  fontSize: 11,
+                                  fontWeight: FontWeight.w600,
+                                  color: Colors.black,
+                                ),
+                              ),
+                            )
+                          : const SizedBox.shrink(),
                     ),
                   ],
                 ),

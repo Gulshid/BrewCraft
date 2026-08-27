@@ -13,6 +13,7 @@ class AnimatedCoffeeCup extends StatefulWidget {
   final Color cremaColor;
   final double intensity;
   final bool showSteam;
+  final bool showStraw;
   final Duration fillDuration;
   final double width;
   final double height;
@@ -24,6 +25,7 @@ class AnimatedCoffeeCup extends StatefulWidget {
     this.cremaColor = const Color(0xFFD7B899),
     this.intensity = 0.7,
     this.showSteam = true,
+    this.showStraw = false,
     this.fillDuration = const Duration(milliseconds: 1800),
     this.width = 220,
     this.height = 260,
@@ -108,6 +110,7 @@ class _AnimatedCoffeeCupState extends State<AnimatedCoffeeCup>
                   liquidColor: widget.liquidColor,
                   cremaColor: widget.cremaColor,
                   intensity: widget.intensity,
+                  showStraw: widget.showStraw,
                 ),
               ),
             ],

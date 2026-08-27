@@ -94,6 +94,8 @@ class _CoffeeCardState extends State<CoffeeCard>
                       liquidColor: widget.coffee.primaryColor,
                       cremaColor: widget.coffee.secondaryColor,
                       intensity: widget.coffee.intensity,
+                      showStraw: widget.coffee.category == CoffeeCategory.cold ||
+                          widget.coffee.category == CoffeeCategory.specialty,
                       fillDuration: const Duration(milliseconds: 1400),
                     ),
                   ),

@@ -39,21 +39,12 @@ class SizePillSelector extends StatelessWidget {
               onTap: () => onChanged(size),
               child: AnimatedContainer(
                 duration: AppDurations.medium,
-                curve: AppCurves.overshoot,
+                curve: AppCurves.smooth,
                 height: height - 8,
                 margin: const EdgeInsets.symmetric(horizontal: 2),
                 decoration: BoxDecoration(
                   gradient: isSelected ? gradient : null,
                   borderRadius: BorderRadius.circular(height),
-                  boxShadow: isSelected
-                      ? [
-                          BoxShadow(
-                            color: Colors.black.withValues(alpha: 0.25),
-                            blurRadius: 8,
-                            offset: const Offset(0, 3),
-                          ),
-                        ]
-                      : null,
                 ),
                 alignment: Alignment.center,
                 child: Text(

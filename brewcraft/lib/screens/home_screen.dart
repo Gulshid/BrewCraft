@@ -271,10 +271,10 @@ class _HomeScreenState extends State<HomeScreen> {
   Widget _buildCategoryChips() {
     final categories = [null, ...CoffeeCategory.values];
     return SizedBox(
-      height: 44,
+      height: 52,
       child: ListView.builder(
         scrollDirection: Axis.horizontal,
-        padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 8),
+        padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 4),
         itemCount: categories.length,
         itemBuilder: (context, i) {
           final cat = categories[i];
@@ -285,13 +285,14 @@ class _HomeScreenState extends State<HomeScreen> {
               onTap: () => setState(() => _selectedCategory = cat),
               child: AnimatedContainer(
                 duration: AppDurations.medium,
-                curve: AppCurves.overshoot,
+                curve: AppCurves.smooth,
                 padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 10),
                 decoration: BoxDecoration(
                   gradient: selected ? AppColors.accentGradient : null,
                   color: selected ? null : AppColors.surfaceElevated,
                   borderRadius: BorderRadius.circular(20),
                 ),
+                alignment: Alignment.center,
                 child: Text(
                   cat?.label ?? 'All',
                   style: TextStyle(

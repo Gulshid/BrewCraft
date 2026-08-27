@@ -156,6 +156,8 @@ class _DrinkHeroCardState extends State<DrinkHeroCard> {
                           liquidColor: coffee.primaryColor,
                           cremaColor: coffee.secondaryColor,
                           intensity: coffee.intensity,
+                          showStraw: coffee.category == CoffeeCategory.cold ||
+                              coffee.category == CoffeeCategory.specialty,
                           fillDuration: const Duration(milliseconds: 900),
                         ),
                       ),
