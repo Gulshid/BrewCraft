@@ -46,8 +46,8 @@ class _HomeScreenState extends State<HomeScreen> {
     Navigator.of(context).push(
       PageRouteBuilder(
         transitionDuration: AppDurations.medium,
-        pageBuilder: (_, anim, __) => CoffeeDetailScreen(coffee: coffee),
-        transitionsBuilder: (_, anim, __, child) {
+        pageBuilder: (_, anim, _) => CoffeeDetailScreen(coffee: coffee),
+        transitionsBuilder: (_, anim, _, child) {
           final curved = CurvedAnimation(
             parent: anim,
             curve: AppCurves.emphasized,
