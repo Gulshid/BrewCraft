@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../models/coffee.dart';
 import '../providers/cart_provider.dart';
+import '../providers/favorites_provider.dart';
 import '../theme/app_theme.dart';
 import '../widgets/animated_coffee_cup.dart';
 import '../widgets/size_pill_selector.dart';
@@ -65,6 +66,8 @@ class _CoffeeDetailScreenState extends State<CoffeeDetailScreen> {
   @override
   Widget build(BuildContext context) {
     final coffee = widget.coffee;
+    final favorites = context.watch<FavoritesProvider>();
+    final isFavorite = favorites.isFavorite(coffee.id);
     return Scaffold(
       backgroundColor: AppColors.background,
       body: SafeArea(
@@ -80,8 +83,30 @@ class _CoffeeDetailScreenState extends State<CoffeeDetailScreen> {
                         color: AppColors.cream, size: 18),
                   ),
                   const Spacer(),
-                  Icon(Icons.favorite_border_rounded,
-                      color: AppColors.textMuted.withValues(alpha: 0.8)),
+                  GestureDetector(
+                    onTap: () => context
+                        .read<FavoritesProvider>()
+                        .toggleFavorite(coffee.id),
+                    child: Padding(
+                      padding: const EdgeInsets.all(8),
+                      child: AnimatedSwitcher(
+                        duration: AppDurations.fast,
+                        transitionBuilder: (child, anim) => ScaleTransition(
+                          scale: anim,
+                          child: child,
+                        ),
+                        child: Icon(
+                          isFavorite
+                              ? Icons.favorite_rounded
+                              : Icons.favorite_border_rounded,
+                          key: ValueKey(isFavorite),
+                          color: isFavorite
+                              ? AppColors.accent
+                              : AppColors.textMuted.withValues(alpha: 0.8),
+                        ),
+                      ),
+                    ),
+                  ),
                 ],
               ),
             ),
