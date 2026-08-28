@@ -9,6 +9,8 @@ import '../widgets/coffee_card.dart';
 import '../widgets/drink_hero_card.dart';
 import 'cart_screen.dart';
 import 'coffee_detail_screen.dart';
+import 'order_tracking_screen.dart';
+import 'profile_screen.dart';
 
 class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
@@ -46,8 +48,8 @@ class _HomeScreenState extends State<HomeScreen> {
     Navigator.of(context).push(
       PageRouteBuilder(
         transitionDuration: AppDurations.medium,
-        pageBuilder: (_, anim, _) => CoffeeDetailScreen(coffee: coffee),
-        transitionsBuilder: (_, anim, _, child) {
+        pageBuilder: (_, anim, __) => CoffeeDetailScreen(coffee: coffee),
+        transitionsBuilder: (_, anim, __, child) {
           final curved = CurvedAnimation(
             parent: anim,
             curve: AppCurves.emphasized,
@@ -150,6 +152,15 @@ class _HomeScreenState extends State<HomeScreen> {
           if (i == 1) {
             Navigator.of(context)
                 .push(MaterialPageRoute(builder: (_) => const CartScreen()))
+                .then((_) => setState(() => _navIndex = 0));
+          } else if (i == 2) {
+            Navigator.of(context)
+                .push(MaterialPageRoute(
+                    builder: (_) => const OrderTrackingScreen()))
+                .then((_) => setState(() => _navIndex = 0));
+          } else if (i == 3) {
+            Navigator.of(context)
+                .push(MaterialPageRoute(builder: (_) => const ProfileScreen()))
                 .then((_) => setState(() => _navIndex = 0));
           }
         },
