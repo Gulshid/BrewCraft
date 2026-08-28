@@ -83,6 +83,7 @@ class _SlideToOrderButtonState extends State<SlideToOrderButton> {
                   }
                 },
           child: Container(
+            width: trackWidth,
             height: widget.height,
             decoration: BoxDecoration(
               color: AppColors.surfaceElevated,
